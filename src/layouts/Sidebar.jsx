@@ -41,7 +41,8 @@ const Sidebar = () => {
     { name: 'Party Search', path: '/party-search' },
     { name: 'Pending Order', path: '/pending-order' },
     { name: 'Pending Stage', path: '/pending-stage' },
-    { name: 'Calendar', path: '/calendar' }
+    { name: 'Calendar', path: '/calendar' },
+    { name: 'New Lead Calendar', path: '/new-lead-calendar' }
   ];
 
   // Check if current path is active
