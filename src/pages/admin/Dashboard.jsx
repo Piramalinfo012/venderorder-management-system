@@ -1,379 +1,525 @@
-import React, { useState, useEffect, useRef } from "react";
-import { 
-  Search, Building, User, Phone, FileText, Calendar,
-  MapPin, Truck, Package, Info, Download, X, ChevronDown,
-  CreditCard, Clock, UserCheck, Loader2
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  Building2,
+  FileBadge,
+  FileText,
+  Globe2,
+  Layers3,
+  MapPinned,
+  PhoneCall,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  UserRound,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { fetchVendorsCached, getProductTags } from "../../utils/vendorData";
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzGAhuT63tIIgyKKu_nZz_EjUpUSonMw6fFLjzRdnb_Te7ReYBaV36A89UknMYGRrW/exec";
+const formatDateTime = (value) => {
+  if (!value) return "Not available";
 
-const CompanySearchDashboard = () => {
-  const [companies, setCompanies] = useState([]);
-  const [filteredCompanies, setFilteredCompanies] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [selectedCompanyName, setSelectedCompanyName] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const formatDate = (value) => {
+  if (!value) return "No purchase date";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const dropdownRef = useRef(null);
+  const [lastUpdated, setLastUpdated] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
-    fetchCompanies();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+    const fetchVendors = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { vendors: vendorRecords, updated } = await fetchVendorsCached();
+        setVendors(vendorRecords);
+        setLastUpdated(updated || "");
+      } catch (fetchError) {
+        console.error("Error fetching dashboard data:", fetchError);
+        setError(fetchError.message || "Unable to load dashboard");
+      } finally {
+        setLoading(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    fetchVendors();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = companies.filter(c => 
-        c.partyName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredCompanies(filtered);
-    } else {
-      setFilteredCompanies(companies);
-    }
-  }, [searchQuery, companies]);
+  const filteredVendors = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    if (!query) return vendors;
 
-  const fetchCompanies = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${SCRIPT_URL}?sheet=Data`);
-      const result = await response.json();
-      
-      if (result.success && result.data && result.data.length > 1) {
-        const rows = result.data.slice(1);
-        const companyList = rows
-          .filter(row => row[0] && row[0].toString().trim() !== "")
-          .map((row, index) => ({
-            id: index,
-            partyName: row[0] || "",
-            stateName: row[1] || "",
-            billingAddress: row[2] || "",
-            shippingAddress: row[3] || "",
-            gstNumber: row[4] || "",
-            contactPerson: row[5] || "",
-            whatsappNumber: row[6] || "",
-            productsWeSell: row[7] || "",
-            lastPurchaseDate: row[8] || "",
-            averageOrderCycle: row[9] || "",
-            paymentTerm: row[10] || "",
-            creditLimit: row[11] || "",
-            crmName: row[12] || ""
-          }));
-        setCompanies(companyList);
-        setFilteredCompanies(companyList);
-      } else {
-        setError("No data found in sheet");
-      }
-    } catch (err) {
-      setError("Failed to fetch data: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setSelectedCompanyName(value);
-    setIsDropdownOpen(true);
-    // Auto clear result when user types new input
-    if (selectedCompany) {
-      setSelectedCompany(null);
-    }
-  };
-
-  const handleSelectCompany = (company) => {
-    setSelectedCompanyName(company.partyName);
-    setSearchQuery(company.partyName);
-    setIsDropdownOpen(false);
-    // Auto clear previous result
-    setSelectedCompany(null);
-  };
-
-  const handleSearch = () => {
-    if (!selectedCompanyName.trim()) return;
-    const company = companies.find(c => 
-      c.partyName.toLowerCase() === selectedCompanyName.toLowerCase()
+    return vendors.filter((vendor) =>
+      [
+        vendor.partyName,
+        vendor.stateName,
+        vendor.contactPerson,
+        vendor.productsTheySell,
+        vendor.gstNumber,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
     );
-    setSelectedCompany(company || null);
-    setIsDropdownOpen(false);
-  };
+  }, [searchText, vendors]);
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  const insights = useMemo(() => {
+    const stateCounts = {};
+    const productCounts = {};
 
-  const handleClear = () => {
-    setSearchQuery("");
-    setSelectedCompanyName("");
-    setSelectedCompany(null);
-  };
+    vendors.forEach((vendor) => {
+      if (vendor.stateName) {
+        stateCounts[vendor.stateName] = (stateCounts[vendor.stateName] || 0) + 1;
+      }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return dateString;
-  };
-
-  const downloadPDF = () => {
-    if (!selectedCompany) return;
-    const c = selectedCompany;
-    const now = new Date();
-    const generatedDate = now.toLocaleDateString('en-US', { 
-      month: '2-digit', day: '2-digit', year: 'numeric' 
-    }) + ', ' + now.toLocaleTimeString('en-US', { 
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+      getProductTags(vendor.productsTheySell).forEach((tag) => {
+        productCounts[tag] = (productCounts[tag] || 0) + 1;
+      });
     });
 
-    // Create PDF content
-    const pdfContent = `%PDF-1.4
-1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
-2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
-3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R/F2 6 0 R>>>>>>endobj
-4 0 obj<</Length 3500>>stream
-BT
-/F2 18 Tf 0.227 0.388 0.702 rg
-50 750 Td (Party Search Report) Tj
-0 g /F1 10 Tf
-0 -25 Td (Generated on: ${generatedDate}) Tj
-350 0 Td (Total Results: 1) Tj
--350 -30 Td /F2 12 Tf (1. ${c.partyName}) Tj
-/F1 10 Tf
-0 -25 Td (Industry: -) Tj
-0 -15 Td (Headquarters: ${c.billingAddress || '-'}) Tj
-0 -15 Td (Contact Person: ${c.contactPerson || '-'}) Tj
-0 -15 Td (Phone: ${c.whatsappNumber || '-'}) Tj
-0 -15 Td (WhatsApp: ${c.whatsappNumber || '-'}) Tj
-0 -15 Td (GST Number: ${c.gstNumber || '-'}) Tj
-0 -15 Td (Products: ${c.productsWeSell || '-'}) Tj
-0 -15 Td (Last Purchase Date: ${c.lastPurchaseDate || '-'}) Tj
-0 -15 Td (Billing Address: ${c.billingAddress || '-'}) Tj
-0 -15 Td (Shipping Address: ${c.shippingAddress || '-'}) Tj
-0 -15 Td (Payment Term: ${c.paymentTerm || '-'}) Tj
-0 -15 Td (Credit Limit: ${c.creditLimit || '-'}) Tj
-0 -15 Td (CRM Handler: ${c.crmName || '-'}) Tj
-0 -15 Td (Average Order Cycle: ${c.averageOrderCycle || '-'}) Tj
-0 -25 Td (Description:) Tj
-0 -15 Td (Company based in ${c.stateName || '-'}. Contact: ${c.contactPerson || '-'}) Tj
-0 -50 Td 0.5 g /F1 8 Tf (Page 1) Tj
-180 0 Td (Powered by Botivate) Tj
-150 0 Td (Generated: ${generatedDate}) Tj
-ET
-endstream
-endobj
-5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
-6 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold>>endobj
-xref
-0 7
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000266 00000 n 
-0000003818 00000 n 
-0000003895 00000 n 
-trailer<</Size 7/Root 1 0 R>>
-startxref
-3978
-%%EOF`;
+    const topStates = Object.entries(stateCounts)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
 
-    const blob = new Blob([pdfContent], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${c.partyName.replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
+    const topProducts = Object.entries(productCounts)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ name, count }));
+
+    return {
+      totalVendors: vendors.length,
+      activeContacts: vendors.filter((vendor) => vendor.whatsappNumber).length,
+      gstReady: vendors.filter((vendor) => vendor.gstNumber).length,
+      statesCovered: Object.keys(stateCounts).length,
+      topStates,
+      topProducts,
+      missingProfiles: vendors.filter(
+        (vendor) => !vendor.partyName || !vendor.contactPerson || !vendor.stateName
+      ).length,
+    };
+  }, [vendors]);
+
+  const headlineCards = [
+    {
+      label: "Vendor Records",
+      value: insights.totalVendors,
+      note: "Live synced operational base",
+      icon: Building2,
+      accent: "from-sky-500 to-blue-700",
+      surface: "bg-sky-50",
+    },
+    {
+      label: "States Covered",
+      value: insights.statesCovered,
+      note: "Regional business spread",
+      icon: Globe2,
+      accent: "from-emerald-500 to-teal-600",
+      surface: "bg-emerald-50",
+    },
+    {
+      label: "GST Available",
+      value: insights.gstReady,
+      note: "Tax-ready vendor profiles",
+      icon: ShieldCheck,
+      accent: "from-amber-500 to-orange-600",
+      surface: "bg-amber-50",
+    },
+    {
+      label: "Contactable",
+      value: insights.activeContacts,
+      note: "Whatsapp-enabled contacts",
+      icon: PhoneCall,
+      accent: "from-fuchsia-500 to-rose-600",
+      surface: "bg-rose-50",
+    },
+  ];
+
+  const quickActions = [
+    {
+      label: "Open Vendor Search",
+      description: "Search by party or product name",
+      icon: Search,
+      action: () => navigate("/party-search"),
+      style: "bg-white text-slate-900",
+    },
+    {
+      label: "Generate SO",
+      description: "Generate a professional SO document",
+      icon: FileBadge,
+      action: () => navigate("/sales-order"),
+      style: "bg-cyan-400 text-slate-950",
+    },
+    {
+      label: "Create Quotation",
+      description: "Prepare a customer quotation document",
+      icon: FileText,
+      action: () => navigate("/quotation"),
+      style: "bg-white/90 text-slate-900",
+    },
+    {
+      label: "Vendor Search",
+      description: "Open filtered vendor directory",
+      icon: Search,
+      action: () => navigate("/party-search"),
+      style: "bg-slate-900 text-white border border-white/10",
+    },
+    {
+      label: "Purchase Order",
+      description: "Prepare vendor purchase order document",
+      icon: FileText,
+      action: () => navigate("/purchase-order"),
+      style: "bg-white text-slate-900",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="h-72 animate-pulse rounded-[2rem] bg-slate-900/90" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-36 animate-pulse rounded-[1.75rem] bg-white shadow-sm"
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.9fr]">
+            <div className="h-[32rem] animate-pulse rounded-[2rem] bg-white shadow-sm" />
+            <div className="h-[32rem] animate-pulse rounded-[2rem] bg-white shadow-sm" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+        <div className="w-full max-w-2xl rounded-[2rem] border border-red-100 bg-white p-10 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard load failed</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            Retry dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
-      <div className="max-w-4xl mx-auto space-y-4">
-        {/* Search Section - Always Visible */}
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-          <h1 className="text-base font-semibold text-gray-700 mb-3">Search Company by Name</h1>
-          
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-blue-600 animate-spin mr-2" />
-              <span className="text-gray-600">Loading companies...</span>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#dbeafe,_#f8fafc_35%,_#cffafe_75%,_#ffffff_100%)] px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#020617,#0f172a_35%,#155e75_70%,#0891b2_100%)] px-6 py-7 text-white shadow-[0_30px_90px_-35px_rgba(8,145,178,0.7)] sm:px-8 sm:py-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.14),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(34,211,238,0.22),transparent_22%),radial-gradient(circle_at_70%_75%,rgba(125,211,252,0.18),transparent_24%)]" />
+
+          <div className="relative z-10 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">
+                <Sparkles className="h-4 w-4" />
+                Advanced dashboard
+              </div>
+
+              <div className="max-w-3xl space-y-3">
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+                  Vendor operations ka smarter, sharper aur zyada premium control room.
+                </h1>
+                <p className="max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+                  Live Vendor sheet ko metrics, coverage, product mix, searchable insights
+                  aur quick action modules me convert kiya gaya hai, taaki dashboard
+                  sirf summary na lage, actual command center feel de.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {quickActions.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className={`group inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 ${item.style}`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>
+                      {item.label}
+                      <span className="block text-xs font-medium opacity-70">
+                        {item.description}
+                      </span>
+                    </span>
+                    <ArrowRight className="ml-1 h-4 w-4 opacity-70 transition group-hover:translate-x-0.5" />
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : error ? (
-            <div className="text-red-500 text-center py-4">
-              {error}
-              <button onClick={fetchCompanies} className="ml-2 text-blue-600 underline">Retry</button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <div className="relative flex-1" ref={dropdownRef}>
-                <div 
-                  className="w-full px-3 py-2 pr-9 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 bg-white cursor-pointer flex items-center"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                >
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">
+                      Sync status
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold">{insights.totalVendors}</p>
+                    <p className="mt-1 text-sm text-slate-200">records currently usable</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-3">
+                    <Activity className="h-5 w-5 text-cyan-100" />
+                  </div>
+                </div>
+                <div className="mt-5 rounded-2xl bg-slate-950/25 p-4">
+                  <p className="text-sm text-slate-200">Last sync</p>
+                  <p className="mt-2 text-lg font-semibold">{formatDateTime(lastUpdated)}</p>
+                </div>
+              </div>
+
+              <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">
+                    Quick search
+                  </p>
+                  <Search className="h-4 w-4 text-cyan-100" />
+                </div>
+                <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-slate-900">
+                  <Search className="h-4 w-4 text-slate-400" />
                   <input
-                    type="text"
-                    placeholder="Select or search company..."
-                    value={searchQuery}
-                    onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsDropdownOpen(true);
-                    }}
-                    className="flex-1 outline-none text-sm bg-transparent"
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                    placeholder="Search party, state, contact, product..."
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
                   />
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </div>
-                
-                {isDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredCompanies.length > 0 ? (
-                      filteredCompanies.map((company) => (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/10 p-3">
+                    <p className="text-xs text-cyan-100">Matching</p>
+                    <p className="mt-1 text-2xl font-semibold">{filteredVendors.length}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-3">
+                    <p className="text-xs text-cyan-100">Missing profiles</p>
+                    <p className="mt-1 text-2xl font-semibold">{insights.missingProfiles}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {headlineCards.map((card) => (
+            <article
+              key={card.label}
+              className="relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.7)] backdrop-blur"
+            >
+              <div className={`absolute right-0 top-0 h-24 w-24 rounded-bl-[2rem] bg-gradient-to-br ${card.accent} opacity-10`} />
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-500">{card.label}</p>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
+                    {card.value}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{card.note}</p>
+                </div>
+                <div className={`rounded-2xl p-3 ${card.surface}`}>
+                  <card.icon className="h-6 w-6 text-slate-900" />
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.75fr]">
+          <article className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.7)] backdrop-blur sm:p-6">
+            <div className="flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-600">
+                  Command board
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+                  High-signal vendor overview
+                </h2>
+              </div>
+              <div className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
+                {filteredVendors.length} visible
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {filteredVendors.slice(0, 6).map((vendor) => (
+                <div
+                  key={vendor.id}
+                  className="rounded-[1.5rem] border border-slate-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg hover:shadow-sky-100/60"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {vendor.partyName || "Unnamed vendor"}
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                          <MapPinned className="h-3.5 w-3.5" />
+                          {vendor.stateName || "State missing"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                          <UserRound className="h-3.5 w-3.5" />
+                          {vendor.contactPerson || "Contact missing"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-950 p-3 text-white">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3 text-sm text-slate-600">
+                    <div className="rounded-2xl bg-slate-50 p-3">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                        Product mix
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {getProductTags(vendor.productsTheySell).length > 0 ? (
+                          getProductTags(vendor.productsTheySell).map((product) => (
+                            <span
+                              key={`${vendor.id}-${product}`}
+                              className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+                            >
+                              {product}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+                            Product data missing
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-slate-50 p-3">
+                        <p className="text-xs text-slate-400">Whatsapp</p>
+                        <p className="mt-1 font-semibold text-slate-800">
+                          {vendor.whatsappNumber || "N/A"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-3">
+                        <p className="text-xs text-slate-400">Last Purchase</p>
+                        <p className="mt-1 font-semibold text-slate-800">
+                          {formatDate(vendor.lastPurchaseDate)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-50 p-3">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                        Billing address
+                      </p>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                        {vendor.billingAddress || "Billing address missing"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <div className="space-y-6">
+            <article className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.7)] backdrop-blur sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-600">
+                    State intensity
+                  </p>
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                    Top locations
+                  </h2>
+                </div>
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+              </div>
+
+              <div className="mt-5 space-y-4">
+                {insights.topStates.map((state) => {
+                  const width = insights.totalVendors
+                    ? Math.max((state.count / insights.totalVendors) * 100, 12)
+                    : 0;
+
+                  return (
+                    <div key={state.name}>
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="font-semibold text-slate-700">{state.name}</span>
+                        <span className="text-slate-500">{state.count}</span>
+                      </div>
+                      <div className="h-2.5 rounded-full bg-slate-100">
                         <div
-                          key={company.id}
-                          className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
-                          onClick={() => handleSelectCompany(company)}
-                        >
-                          <div className="font-medium text-gray-800">{company.partyName}</div>
-                          <div className="text-xs text-gray-500">{company.stateName}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-3 py-4 text-center text-gray-500 text-sm">No companies found</div>
-                    )}
-                  </div>
-                )}
+                          className="h-full rounded-full bg-[linear-gradient(90deg,#10b981,#06b6d4)]"
+                          style={{ width: `${width}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <button 
-                onClick={handleSearch} 
-                className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-              >
-                <Search className="w-4 h-4" />
-                <span className="hidden sm:inline">Search</span>
-              </button>
-            </div>
-          )}
-        </div>
+            </article>
 
-        {/* Company Details - Shows when company is selected */}
-        {selectedCompany && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-5">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <Building className="w-7 h-7 text-white" />
+            <article className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.7)] backdrop-blur sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-600">
+                    Product matrix
+                  </p>
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                    Top products
+                  </h2>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-white">{selectedCompany.partyName}</h2>
-                  <p className="text-sm text-blue-100">{selectedCompany.stateName}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-6">
-              <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-blue-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">CONTACT PERSON</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.contactPerson || "-"}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-blue-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">WHATSAPP NUMBER</p><p className="text-sm font-semibold text-blue-600">{selectedCompany.whatsappNumber || "-"}</p></div>
-                  </div>
-                </div>
+                <Layers3 className="h-5 w-5 text-violet-600" />
               </div>
 
-              <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Business Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0"><FileText className="w-5 h-5 text-green-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">GST NUMBER</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.gstNumber || "-"}</p></div>
+              <div className="mt-5 flex flex-wrap gap-3">
+                {insights.topProducts.map((product) => (
+                  <div
+                    key={product.name}
+                    className="rounded-2xl bg-violet-50 px-4 py-3 text-sm"
+                  >
+                    <p className="font-semibold text-violet-900">{product.name}</p>
+                    <p className="text-violet-700">{product.count} profiles</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0"><Calendar className="w-5 h-5 text-purple-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">LAST PURCHASE DATE</p><p className="text-sm font-semibold text-gray-900">{formatDate(selectedCompany.lastPurchaseDate)}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0"><Clock className="w-5 h-5 text-yellow-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">AVG ORDER CYCLE</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.averageOrderCycle || "-"}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0"><CreditCard className="w-5 h-5 text-pink-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">PAYMENT TERM</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.paymentTerm || "-"}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0"><CreditCard className="w-5 h-5 text-red-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">CREDIT LIMIT</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.creditLimit || "-"}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0"><UserCheck className="w-5 h-5 text-teal-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">CRM HANDLER</p><p className="text-sm font-semibold text-gray-900">{selectedCompany.crmName || "-"}</p></div>
-                  </div>
-                </div>
+                ))}
               </div>
-
-              <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Address Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-orange-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">BILLING ADDRESS</p><p className="text-sm text-gray-700 leading-relaxed">{selectedCompany.billingAddress || "-"}</p></div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0"><Truck className="w-5 h-5 text-cyan-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">SHIPPING ADDRESS</p><p className="text-sm text-gray-700 leading-relaxed">{selectedCompany.shippingAddress || "-"}</p></div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Products & Services</h3>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0"><Package className="w-5 h-5 text-indigo-600" /></div>
-                  <div className="flex-1 min-w-0"><p className="text-xs text-gray-500 font-semibold mb-1">PRODUCTS WE SELL</p><p className="text-sm text-gray-900 font-medium">{selectedCompany.productsWeSell || "-"}</p></div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button onClick={downloadPDF} className="flex-1 px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  <Download className="w-4 h-4" />Download PDF
-                </button>
-                <button onClick={handleClear} className="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  <X className="w-4 h-4" />Clear
-                </button>
-              </div>
-            </div>
+            </article>
           </div>
-        )}
-
-        {/* No Results Message */}
-        {searchQuery && !selectedCompany && !loading && !isDropdownOpen && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-10 text-center">
-            <Building className="w-14 h-14 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-gray-700 mb-2">No Company Found</h3>
-            <p className="text-sm text-gray-500">Select a company from the dropdown and click Search</p>
-          </div>
-        )}
+        </section>
       </div>
     </div>
   );
 };
 
-export default CompanySearchDashboard;
+export default Dashboard;

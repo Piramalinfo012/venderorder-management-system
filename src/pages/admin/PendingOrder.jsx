@@ -6,7 +6,7 @@ import {
   Users, ShoppingCart, MapPin
 } from "lucide-react";
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzGAhuT63tIIgyKKu_nZz_EjUpUSonMw6fFLjzRdnb_Te7ReYBaV36A89UknMYGRrW/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn7g_Mt7zSTjTmukJhpKWokUCZNFb0l6g-bwd5jgUZLpbTBq-f4LviMjBBQlM85XeX/exec";
 
 const PendingOrderDashboard = () => {
   const [orders, setOrders] = useState([]);
