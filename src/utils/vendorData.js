@@ -1,5 +1,5 @@
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyn7g_Mt7zSTjTmukJhpKWokUCZNFb0l6g-bwd5jgUZLpbTBq-f4LviMjBBQlM85XeX/exec";
+  "https://script.google.com/macros/s/AKfycbzQGz5S4rrdZJNB2FN4YmgPb68Do-dUsZ3pogb3OxVyeOzHcIt-SSKc2iautiPyamL5/exec";
 
 const CACHE_KEY = "vendor-rate-tracking:vendors";
 const CACHE_TTL_MS = 5 * 60 * 1000;

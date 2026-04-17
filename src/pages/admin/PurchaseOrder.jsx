@@ -9,12 +9,14 @@ import {
   Printer,
   Save,
   Trash2,
+  Eye,
+  Download,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchVendorsCached } from "../../utils/vendorData";
 
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyn7g_Mt7zSTjTmukJhpKWokUCZNFb0l6g-bwd5jgUZLpbTBq-f4LviMjBBQlM85XeX/exec";
+  "https://script.google.com/macros/s/AKfycbzQGz5S4rrdZJNB2FN4YmgPb68Do-dUsZ3pogb3OxVyeOzHcIt-SSKc2iautiPyamL5/exec";
 
 const initialItem = {
   id: 1,
@@ -372,48 +374,6 @@ const PurchaseOrder = () => {
             <section className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                  Document Links
-                </h3>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      PDF Edit URL
-                    </label>
-                    <input
-                      type="text"
-                      value={form.pdfEditUrl}
-                      onChange={(event) => updateForm("pdfEditUrl", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      PDF URL
-                    </label>
-                    <input
-                      type="text"
-                      value={form.pdfUrl}
-                      onChange={(event) => updateForm("pdfUrl", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-xs leading-6 text-slate-500">
-                    Sheet fields supported:
-                    <br />
-                    DATE, ORDER NO, PARTY NAME, ADDRESS, KINDLY ATTN, CONTACT NO, PRODUCT
-                    NAME, UNIT, PRICE, FREIGHT, DELIVERED, PAYMENT, PDF EDIT URL, PDF URL,
-                    RAT VALIDITY
-                  </div>
-                  <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-700">
-                    Template Doc ID: <strong>165nqyULE4yhGEwhj2vGofDrPwOsvIrgtL7Vamdkn-a8</strong>
-                    <br />
-                    Upload Folder ID: <strong>1PGjujm1FdR4dhM9uFG7rSuf68wX6Eo3_</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
                   Shipping Details
                 </h3>
                 <div className="mt-3 space-y-2 text-sm text-slate-700">
@@ -425,109 +385,57 @@ const PurchaseOrder = () => {
             </section>
           </div>
 
-          <div className="mt-8 overflow-hidden rounded-2xl border border-slate-300">
-            <div className="flex items-center justify-between border-b border-slate-300 bg-slate-100 px-5 py-4">
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
               <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                Material Details
+                Product Details
               </h3>
-              <button
-                onClick={addItem}
-                className="flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2 text-xs font-bold text-blue-700 no-print"
-              >
-                <Plus size={14} />
-                Add Row
-              </button>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Sr. No.</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Product Name</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Unit</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Price</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Freight</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Delivered</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Payment</th>
-                    <th className="border-b border-r border-slate-200 px-4 py-3 text-left">Rate Validity</th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-left no-print">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, index) => (
-                    <tr key={item.id} className="align-top">
-                      <td className="border-b border-r border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">
-                        {index + 1}
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.productName}
-                          onChange={(event) => updateItem(item.id, "productName", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.unit}
-                          onChange={(event) => updateItem(item.id, "unit", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.price}
-                          onChange={(event) => updateItem(item.id, "price", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.freight}
-                          onChange={(event) => updateItem(item.id, "freight", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.delivered}
-                          onChange={(event) => updateItem(item.id, "delivered", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.payment}
-                          onChange={(event) => updateItem(item.id, "payment", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-r border-slate-200 px-2 py-2">
-                        <input
-                          type="text"
-                          value={item.rateValidity}
-                          onChange={(event) => updateItem(item.id, "rateValidity", event.target.value)}
-                          className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm outline-none focus:bg-white"
-                        />
-                      </td>
-                      <td className="border-b border-slate-200 px-4 py-3 no-print">
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid gap-4 p-5 sm:grid-cols-3">
+              <div className="sm:col-span-3">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Products Description
+                </label>
+                <input
+                  type="text"
+                  value={items[0].productName}
+                  onChange={(event) => updateItem(items[0].id, "productName", event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                  HSN Code
+                </label>
+                <input
+                  type="text"
+                  value="27101990"
+                  disabled
+                  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400 outline-none"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Unit
+                </label>
+                <input
+                  type="text"
+                  value={items[0].unit}
+                  onChange={(event) => updateItem(items[0].id, "unit", event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Price (Rs.)
+                </label>
+                <input
+                  type="text"
+                  value={items[0].price}
+                  onChange={(event) => updateItem(items[0].id, "price", event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                />
+              </div>
             </div>
           </div>
 
@@ -538,14 +446,52 @@ const PurchaseOrder = () => {
                   Terms & Conditions
                 </h3>
               </div>
-              <div className="space-y-3 p-5 text-sm text-slate-700">
-                <p>Transportation - Self Scope / Others</p>
-                <p>PAN - AADCP8688D</p>
-                <p>Taxes - 18% GST</p>
-                <p>GSTIN - 22AADCP8688D2Z9</p>
-                <p>Lifting - 1-2 Days</p>
-                <p>Payment - Advance</p>
-                <p>Note - Applicable TDS Provision Effective from 01.07.2021 @ 0.10%</p>
+              <div className="grid gap-4 p-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Freight
+                  </label>
+                  <input
+                    type="text"
+                    value={items[0].freight}
+                    onChange={(event) => updateItem(items[0].id, "freight", event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Delivered
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Within 24.00 Hrs."
+                    value={items[0].delivered}
+                    onChange={(event) => updateItem(items[0].id, "delivered", event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Payment
+                  </label>
+                  <input
+                    type="text"
+                    value={items[0].payment}
+                    onChange={(event) => updateItem(items[0].id, "payment", event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Rate Validity
+                  </label>
+                  <input
+                    type="text"
+                    value={items[0].rateValidity || ""}
+                    onChange={(event) => updateItem(items[0].id, "rateValidity", event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
+                  />
+                </div>
               </div>
             </div>
 
@@ -571,6 +517,39 @@ const PurchaseOrder = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 no-print">
+            <button
+              onClick={handleSave}
+              disabled={submitting}
+              className="w-full rounded-xl bg-[#2563eb] py-4 text-center font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-70"
+            >
+              {submitting ? "Generating..." : "Generate Purchase Order"}
+            </button>
+            
+            {form.pdfUrl && (
+              <>
+                <button
+                  onClick={() => window.open(form.pdfUrl, '_blank')}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#16a34a] py-4 font-bold text-white shadow-sm transition-all hover:bg-green-700"
+                >
+                  <Eye size={20} /> View Purchase Order
+                </button>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = form.pdfUrl;
+                    link.download = `Purchase_Order_${form.orderNo}.pdf`;
+                    link.target = "_blank";
+                    link.click();
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#dc2626] py-4 font-bold text-white shadow-sm transition-all hover:bg-red-700"
+                >
+                  <Download size={20} /> Download Purchase Order
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
