@@ -2,7 +2,7 @@ const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzQGz5S4rrdZJNB2FN4YmgPb68Do-dUsZ3pogb3OxVyeOzHcIt-SSKc2iautiPyamL5/exec";
 
 const CACHE_KEY = "vendor-rate-tracking:vendors";
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 10 * 1000; // 10 seconds for 'instant' feel
 
 const columns = [
   "partyName",
@@ -16,6 +16,13 @@ const columns = [
 ];
 
 let memoryCache = null;
+
+// Evict any stale cache from older sessions on module load
+try {
+  sessionStorage.removeItem(CACHE_KEY);
+} catch {
+  // ignore
+}
 
 const normalizeVendors = (rows) =>
   rows
@@ -69,10 +76,13 @@ const writeCache = (payload) => {
 };
 
 export const getProductTags = (value) => {
-  if (!value) return [];
+  if (value === undefined || value === null) return [];
+  const str = String(value).trim();
+  if (!str) return [];
 
-  return value
-    .split(/[\/,]/)
+  // Split by common separators: / \ | , ; but preserve spaces within names
+  return str
+    .split(/\s*[\/\\|;,]\s*/)
     .map((item) => item.trim())
     .filter(Boolean);
 };
@@ -83,7 +93,9 @@ export const fetchVendorsCached = async () => {
     return { vendors: cached.vendors, updated: cached.updated, fromCache: true };
   }
 
-  const response = await fetch(`${SCRIPT_URL}?sheet=Vendor`);
+  // Force refresh with a timestamp to bypass any network layer caching
+  const fetchUrl = `${SCRIPT_URL}?sheet=Vendor&t=${Date.now()}`;
+  const response = await fetch(fetchUrl);
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
   }

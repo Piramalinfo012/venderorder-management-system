@@ -1,557 +1,335 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronLeft,
+  CalendarDays,
+  ExternalLink,
   FileText,
+  Hash,
   Loader2,
+  Package,
   Plus,
-  Printer,
-  Save,
-  Trash2,
-  Eye,
-  Download,
+  Search,
+  User,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { fetchVendorsCached } from "../../utils/vendorData";
 
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzQGz5S4rrdZJNB2FN4YmgPb68Do-dUsZ3pogb3OxVyeOzHcIt-SSKc2iautiPyamL5/exec";
 
-const initialItem = {
-  id: 1,
-  productName: "",
-  unit: "Ltr",
-  price: "",
-  freight: "",
-  delivered: "",
-  payment: "",
-  rateValidity: "",
+const PO_FORM_URL =
+  "https://script.google.com/macros/s/AKfycbxuERnJ4UbK9abqRiuccfaxrPVPUnhHU9Y-WAMy8_tCS5cH7_pg7JSWIWIfY-WfWeX_Gg/exec";
+
+// Sheet columns (0-indexed): DATE ORDER_NO PARTY_NAME ADDRESS KINDLY_ATTN CONTACT_NO GST_NO PAN_NO HSN_CODE QUANTITY PRODUCT_NAME UNIT PRICE TRANSPORTATION LIFTING NOTE PAYMENT_TERMS SHIPPING_ADDRESS PDF_EDIT_URL PDF_URL
+const PO_COLUMNS = [
+  "date",
+  "orderNo",
+  "partyName",
+  "address",
+  "kindlyAttn",
+  "contactNo",
+  "gstNo",
+  "panNo",
+  "hsnCode",
+  "quantity",
+  "productName",
+  "unit",
+  "price",
+  "transportation",
+  "lifting",
+  "note",
+  "paymentTerms",
+  "shippingAddress",
+  "pdfEditUrl",
+  "pdfUrl",
+];
+
+const normalizePOs = (rows) =>
+  rows
+    .map((row, index) => {
+      const mapped = PO_COLUMNS.reduce((acc, key, colIdx) => {
+        acc[key] = row[colIdx] ?? "";
+        return acc;
+      }, {});
+      return { id: `po-${index}`, ...mapped };
+    })
+    .filter((po) => po.orderNo || po.partyName || po.date);
+
+const formatDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 };
 
 const PurchaseOrder = () => {
-  const navigate = useNavigate();
-  const [vendors, setVendors] = useState([]);
-  const [loadingVendors, setLoadingVendors] = useState(true);
-  const [showSaved, setShowSaved] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const [form, setForm] = useState({
-    date: new Date().toISOString().split("T")[0],
-    orderNo: `PPPL/${new Date().getFullYear().toString().slice(-2)}-${(
-      new Date().getFullYear() +
-      1
-    )
-      .toString()
-      .slice(-2)}/${Math.floor(Math.random() * 9000) + 1000}`,
-    partyName: "",
-    address: "",
-    kindlyAttn: "",
-    contactNo: "",
-    pdfEditUrl: "",
-    pdfUrl: "",
-  });
-  const [items, setItems] = useState([initialItem]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
 
   useEffect(() => {
-    const loadVendors = async () => {
+    const fetchOrders = async () => {
       try {
-        setLoadingVendors(true);
-        const { vendors: vendorRecords } = await fetchVendorsCached();
-        setVendors(vendorRecords);
-      } catch (error) {
-        console.error("Error fetching vendors for purchase order:", error);
+        setLoading(true);
+        setError(null);
+        const sheetName = encodeURIComponent("Purchase Order");
+        const url = `${SCRIPT_URL}?sheet=${sheetName}&t=${Date.now()}`;
+        console.log("Fetching PO from:", url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        const result = await res.json();
+        console.log("PO raw result:", result);
+
+        // Accept data even if success flag is missing
+        const data = result.data ?? result.rows ?? result.values ?? null;
+        if (!Array.isArray(data)) {
+          throw new Error(result.error || "Purchase Order data unavailable — check sheet name in Google Script");
+        }
+        const rows = normalizePOs(data.slice(1));
+        console.log("Normalized PO rows:", rows);
+        setDebugInfo(`Success! Found ${data.length} rows (incl. header). First row after header: ${JSON.stringify(data[1])}`);
+        setOrders(rows);
+      } catch (err) {
+        console.error("PO fetch error:", err);
+        setError(err.message || "Failed to load purchase orders");
+        setDebugInfo(`Error: ${err.message}`);
       } finally {
-        setLoadingVendors(false);
+        setLoading(false);
       }
     };
-
-    loadVendors();
+    fetchOrders();
   }, []);
 
-  const selectedVendor = useMemo(
-    () => vendors.find((vendor) => vendor.partyName === form.partyName) || null,
-    [form.partyName, vendors]
-  );
-
-  useEffect(() => {
-    if (!selectedVendor) return;
-
-    setForm((current) => ({
-      ...current,
-      address: current.address || selectedVendor.billingAddress || "",
-      kindlyAttn: current.kindlyAttn || selectedVendor.contactPerson || "",
-      contactNo: current.contactNo || String(selectedVendor.whatsappNumber || ""),
-    }));
-
-    setItems((current) =>
-      current.map((item, index) =>
-        index === 0 && !item.productName
-          ? { ...item, productName: selectedVendor.productsTheySell || "" }
-          : item
-      )
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((po) =>
+      [po.orderNo, po.partyName, po.productName, po.date]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
     );
-  }, [selectedVendor]);
+  }, [search, orders]);
 
-  const updateForm = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const updateItem = (id, field, value) => {
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
-  };
-
-  const addItem = () => {
-    const nextId = items.length ? Math.max(...items.map((item) => item.id)) + 1 : 1;
-    setItems((current) => [...current, { ...initialItem, id: nextId }]);
-  };
-
-  const removeItem = (id) => {
-    if (items.length === 1) return;
-    setItems((current) => current.filter((item) => item.id !== id));
-  };
-
-  const handlePrint = () => window.print();
-
-  const handleSave = async () => {
-    try {
-      setSubmitting(true);
-      setSubmitError("");
-
-      const payload = {
-        ...form,
-        items,
-      };
-
-      const params = new URLSearchParams();
-      params.set("action", "createPurchaseOrder");
-      params.set("payload", JSON.stringify(payload));
-
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        },
-        body: params.toString(),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || result.message || "Failed to create purchase order");
-      }
-
-      setForm((current) => ({
-        ...current,
-        pdfEditUrl: result.editUrl || "",
-        pdfUrl: result.pdfUrl || "",
-      }));
-
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2500);
-    } catch (error) {
-      console.error("Error creating purchase order:", error);
-      setSubmitError(
-        error.message ||
-          "Purchase Order create nahi ho paya. Apps Script me createPurchaseOrder action check karein."
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 pb-12">
-      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white no-print">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                Generate Purchase Order
-              </h1>
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">
-                Purchase Order Document Builder
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-600 transition-all hover:bg-slate-50"
-            >
-              <Printer size={18} />
-              <span className="hidden sm:inline">Print</span>
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={submitting}
-              className="flex items-center gap-2 rounded-xl bg-[#1e40af] px-4 py-2 font-bold text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {submitting ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : showSaved ? (
-                <CheckCircle2 size={18} />
-              ) : (
-                <Save size={18} />
-              )}
-              <span>
-                {submitting ? "Generating..." : showSaved ? "Generated" : "Generate PO"}
-              </span>
-            </button>
-          </div>
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(160deg,#eff6ff,#f8fafc,#ecfeff)]">
+        <div className="flex items-center gap-3 rounded-2xl bg-white px-6 py-4 shadow-lg">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="text-sm font-semibold text-slate-700">
+            Loading Purchase Orders…
+          </span>
         </div>
       </div>
+    );
+  }
 
-      <div className="mx-auto max-w-6xl p-4 sm:p-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-          {(submitError || showSaved) && (
-            <div
-              className={`mb-6 flex items-start gap-3 rounded-2xl border px-4 py-3 ${
-                submitError
-                  ? "border-rose-200 bg-rose-50 text-rose-700"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
-              }`}
-            >
-              {submitError ? (
-                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-              ) : (
-                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" />
-              )}
-              <div className="text-sm leading-6">
-                {submitError ? (
-                  submitError
-                ) : (
-                  <>
-                    Purchase Order generate ho gaya. Agar Apps Script setup sahi hai to
-                    `PDF Edit URL` aur `PDF URL` fields fill ho jayenge aur sheet me record save hoga.
-                  </>
-                )}
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+        <div className="w-full max-w-xl rounded-[2rem] border border-red-100 bg-white p-10 text-center shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900">Failed to load</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-500">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#bfdbfe,_#eff6ff_25%,_#f8fafc_55%,_#e0f2fe_100%)] px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {debugInfo && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-[10px] text-blue-900 backdrop-blur-sm overflow-auto max-h-40">
+            <strong>DEBUG RAW DATA:</strong> {debugInfo}
+          </div>
+        )}
+
+        {/* Hero Header */}
+        <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#020617,#1e3a8a_40%,#1d4ed8_100%)] text-white shadow-[0_30px_80px_-35px_rgba(29,78,216,0.7)]">
+          <div className="grid gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[1.4fr_0.6fr]">
+
+            {/* Left: Title + Stats */}
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-300">
+                  Purchase Orders
+                </p>
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  PO Command Center
+                </h1>
+                <p className="text-sm leading-7 text-blue-100">
+                  Live purchase order records fetched directly from your Google Sheet.
+                </p>
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-blue-200">Total POs</p>
+                  <p className="mt-2 text-2xl font-bold">{orders.length}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-blue-200">Filtered</p>
+                  <p className="mt-2 text-2xl font-bold">{filtered.length}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-blue-200">With PDF</p>
+                  <p className="mt-2 text-2xl font-bold">
+                    {orders.filter((o) => o.pdfUrl).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: New PO Button + Search */}
+            <div className="flex flex-col gap-4 rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200">
+                Quick Actions
+              </p>
+
+              <button
+                onClick={() => window.open(PO_FORM_URL, "_blank")}
+                className="group flex items-center gap-3 rounded-2xl bg-white px-5 py-4 text-left text-blue-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                <div className="rounded-xl bg-blue-600 p-2 text-white">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">New Purchase Order</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Open PO form in new tab</p>
+                </div>
+                <ExternalLink className="ml-auto h-4 w-4 text-slate-400 group-hover:text-blue-600 transition" />
+              </button>
+
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
+                <Search className="h-4 w-4 text-blue-200 shrink-0" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search order, party, product…"
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-blue-300"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Orders Grid */}
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.5)] backdrop-blur sm:p-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-600">
+                Records
+              </p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+                Purchase Order List
+              </h2>
+            </div>
+            <span className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
+              {filtered.length} orders
+            </span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
+              <p className="text-sm text-slate-500">
+                {orders.length === 0
+                  ? "No purchase orders found in the sheet."
+                  : "No orders match your search."}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((po) => (
+                <div
+                  key={po.id}
+                  className="group rounded-[1.5rem] border border-slate-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/60"
+                >
+                  {/* Card Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-xl bg-blue-950 p-2 text-white">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">
+                          {po.orderNo || "—"}
+                        </p>
+                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                          <CalendarDays className="h-3 w-3" />
+                          {formatDate(po.date)}
+                        </p>
+                      </div>
+                    </div>
+                    {po.pdfUrl && (
+                      <a
+                        href={po.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl bg-blue-50 p-2 text-blue-600 transition hover:bg-blue-100"
+                        title="View PDF"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Info Rows */}
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="font-semibold text-slate-800 truncate">
+                        {po.partyName || "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Package className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{po.productName || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Hash className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span>
+                        {po.quantity || "—"} {po.unit || ""}
+                        {po.price ? ` · ₹${po.price}` : ""}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {po.gstNo && (
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        GST: {po.gstNo}
+                      </span>
+                    )}
+                    {po.paymentTerms && (
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        {po.paymentTerms}
+                      </span>
+                    )}
+                    {po.pdfEditUrl && (
+                      <a
+                        href={po.pdfEditUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition"
+                      >
+                        Edit PDF
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-
-          <div className="border-b border-slate-300 pb-5">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <img src="/PPPL.png" alt="PPPL" className="h-14 w-auto object-contain" />
-                  <div>
-                    <h2 className="text-4xl font-black uppercase tracking-[0.08em] text-[#1f3864]">
-                      Piramal
-                    </h2>
-                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-                      ISO 9001:2015 | ISO 14001:2015
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-1 text-sm font-medium text-slate-700">
-                  <p>PIRAMAL PETROLEUM PVT. LTD.</p>
-                  <p>SF-8, Shyam Plaza, Pandri, Raipur (Chhattisgarh) 492001</p>
-                  <p>Office No. 0771-2439923, 0771-2439922</p>
-                </div>
-              </div>
-
-              <div className="min-w-[220px] rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#1f3864] p-2 text-white">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold uppercase tracking-[0.18em] text-slate-900">
-                      Purchase Order
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-500">
-                      Company Issue Format
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <section className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(event) => updateForm("date", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Order No
-                  </label>
-                  <input
-                    type="text"
-                    value={form.orderNo}
-                    onChange={(event) => updateForm("orderNo", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200">
-                <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
-                  <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                    Party Details
-                  </h3>
-                </div>
-                <div className="grid gap-4 p-5 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Party Name
-                    </label>
-                    <select
-                      disabled={loadingVendors}
-                      value={form.partyName}
-                      onChange={(event) => updateForm("partyName", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 disabled:opacity-60"
-                    >
-                      <option value="">
-                        {loadingVendors ? "Loading party accounts..." : "Select party name"}
-                      </option>
-                      {vendors.map((vendor) => (
-                        <option key={vendor.id} value={vendor.partyName}>
-                          {vendor.partyName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Address
-                    </label>
-                    <textarea
-                      rows="3"
-                      value={form.address}
-                      onChange={(event) => updateForm("address", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Kindly Attn
-                    </label>
-                    <input
-                      type="text"
-                      value={form.kindlyAttn}
-                      onChange={(event) => updateForm("kindlyAttn", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Contact No
-                    </label>
-                    <input
-                      type="text"
-                      value={form.contactNo}
-                      onChange={(event) => updateForm("contactNo", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                  Shipping Details
-                </h3>
-                <div className="mt-3 space-y-2 text-sm text-slate-700">
-                  <p className="font-semibold">Piramal Petroleum Pvt. Ltd.</p>
-                  <p>Kh.No.300/1, 300/2, 300/3, Village-Raita, Block-Dharsiwa, Raipur (C.G.) 493221</p>
-                  <p>Contact Details - Mr. Rahul Agrawal - 9993831316</p>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-              <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                Product Details
-              </h3>
-            </div>
-            <div className="grid gap-4 p-5 sm:grid-cols-3">
-              <div className="sm:col-span-3">
-                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                  Products Description
-                </label>
-                <input
-                  type="text"
-                  value={items[0].productName}
-                  onChange={(event) => updateItem(items[0].id, "productName", event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                  HSN Code
-                </label>
-                <input
-                  type="text"
-                  value="27101990"
-                  disabled
-                  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400 outline-none"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                  Unit
-                </label>
-                <input
-                  type="text"
-                  value={items[0].unit}
-                  onChange={(event) => updateItem(items[0].id, "unit", event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                  Price (Rs.)
-                </label>
-                <input
-                  type="text"
-                  value={items[0].price}
-                  onChange={(event) => updateItem(items[0].id, "price", event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-2xl border border-slate-200">
-              <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
-                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                  Terms & Conditions
-                </h3>
-              </div>
-              <div className="grid gap-4 p-5 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Freight
-                  </label>
-                  <input
-                    type="text"
-                    value={items[0].freight}
-                    onChange={(event) => updateItem(items[0].id, "freight", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Delivered
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Within 24.00 Hrs."
-                    value={items[0].delivered}
-                    onChange={(event) => updateItem(items[0].id, "delivered", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Payment
-                  </label>
-                  <input
-                    type="text"
-                    value={items[0].payment}
-                    onChange={(event) => updateItem(items[0].id, "payment", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                    Rate Validity
-                  </label>
-                  <input
-                    type="text"
-                    value={items[0].rateValidity || ""}
-                    onChange={(event) => updateItem(items[0].id, "rateValidity", event.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-                  Registration Details
-                </h3>
-                <div className="mt-4 space-y-2 text-sm text-slate-700">
-                  <p>PAN - AADCP8688D</p>
-                  <p>GSTIN - 22AADCP8688D2Z9</p>
-                  <p>Website - www.piramalpetroleum.com</p>
-                  <p>Email - piramalpetroleumpltd@yahoo.co.in</p>
-                </div>
-              </div>
-
-              <div className="mt-12 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-                  For, Piramal Petroleum Pvt. Ltd.
-                </p>
-                <div className="mt-16 border-t border-slate-300 pt-3 text-sm font-semibold text-slate-700">
-                  Authorized Signatory
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 no-print">
-            <button
-              onClick={handleSave}
-              disabled={submitting}
-              className="w-full rounded-xl bg-[#2563eb] py-4 text-center font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-70"
-            >
-              {submitting ? "Generating..." : "Generate Purchase Order"}
-            </button>
-            
-            {form.pdfUrl && (
-              <>
-                <button
-                  onClick={() => window.open(form.pdfUrl, '_blank')}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#16a34a] py-4 font-bold text-white shadow-sm transition-all hover:bg-green-700"
-                >
-                  <Eye size={20} /> View Purchase Order
-                </button>
-                <button
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = form.pdfUrl;
-                    link.download = `Purchase_Order_${form.orderNo}.pdf`;
-                    link.target = "_blank";
-                    link.click();
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#dc2626] py-4 font-bold text-white shadow-sm transition-all hover:bg-red-700"
-                >
-                  <Download size={20} /> Download Purchase Order
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

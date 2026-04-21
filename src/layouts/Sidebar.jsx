@@ -40,13 +40,20 @@ const Sidebar = () => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendor Search', path: '/party-search', icon: Search },
-    { name: 'Quotation', path: '/quotation', icon: FileText },
-    { name: 'Sales Order (SO)', path: '/sales-order', icon: FileText },
+    { name: 'Quotation', path: 'https://script.google.com/macros/s/AKfycbzjU0VOBHyvWioZlb--7d3idRJNDVzaPL6YDrcf5Rb7imQ6ISPVfcD-tcQXdh7gJcB-/exec', icon: FileText, external: true },
     { name: 'Purchase Order', path: '/purchase-order', icon: FileText }
   ];
 
   // Check if current path is active
   const isActive = (path) => location.pathname === path;
+
+  const handleNavClick = (item) => {
+    if (item.external) {
+      window.open(item.path, '_blank');
+    } else {
+      navigate(item.path);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -66,7 +73,7 @@ const Sidebar = () => {
               {navItems.map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleNavClick(item)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive(item.path)
                       ? 'text-white shadow-md'
                       : 'text-gray-700 hover:bg-gray-100'
@@ -94,7 +101,7 @@ const Sidebar = () => {
               {navItems.map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleNavClick(item)}
                   className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-3 ${isActive(item.path)
                       ? 'text-white shadow-md'
                       : 'text-gray-700 hover:bg-gray-100'

@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowRight,
   Building2,
-  FileBadge,
   FileText,
   Globe2,
   Layers3,
@@ -53,6 +52,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [productFilter, setProductFilter] = useState("");
 
   useEffect(() => {
     const fetchVendors = async () => {
@@ -73,22 +73,41 @@ const Dashboard = () => {
     fetchVendors();
   }, []);
 
+  const productOptions = useMemo(() => {
+    const unique = new Set();
+    vendors.forEach((vendor) => {
+      getProductTags(vendor.productsTheySell).forEach((tag) => unique.add(tag));
+    });
+
+    return Array.from(unique).sort((left, right) => left.localeCompare(right));
+  }, [vendors]);
+
   const filteredVendors = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    if (!query) return vendors;
+    const product = productFilter.trim().toLowerCase();
 
-    return vendors.filter((vendor) =>
-      [
-        vendor.partyName,
-        vendor.stateName,
-        vendor.contactPerson,
-        vendor.productsTheySell,
-        vendor.gstNumber,
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    );
-  }, [searchText, vendors]);
+    return vendors.filter((vendor) => {
+      const matchesSearch =
+        !query ||
+        [
+          vendor.partyName,
+          vendor.stateName,
+          vendor.contactPerson,
+          vendor.productsTheySell,
+          vendor.gstNumber,
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query));
+
+      const matchesProduct =
+        !product ||
+        getProductTags(vendor.productsTheySell).some((tag) =>
+          tag.toLowerCase().includes(product)
+        );
+
+      return matchesSearch && matchesProduct;
+    });
+  }, [searchText, productFilter, vendors]);
 
   const insights = useMemo(() => {
     const stateCounts = {};
@@ -171,17 +190,10 @@ const Dashboard = () => {
       style: "bg-white text-slate-900",
     },
     {
-      label: "Generate SO",
-      description: "Generate a professional SO document",
-      icon: FileBadge,
-      action: () => navigate("/sales-order"),
-      style: "bg-cyan-400 text-slate-950",
-    },
-    {
       label: "Create Quotation",
       description: "Prepare a customer quotation document",
       icon: FileText,
-      action: () => navigate("/quotation"),
+      action: () => window.open("https://script.google.com/macros/s/AKfycbzjU0VOBHyvWioZlb--7d3idRJNDVzaPL6YDrcf5Rb7imQ6ISPVfcD-tcQXdh7gJcB-/exec", "_blank"),
       style: "bg-white/90 text-slate-900",
     },
     {
@@ -195,7 +207,7 @@ const Dashboard = () => {
       label: "Purchase Order",
       description: "Prepare vendor purchase order document",
       icon: FileText,
-      action: () => navigate("/purchase-order"),
+      action: () => window.open("https://script.google.com/macros/s/AKfycbxuERnJ4UbK9abqRiuccfaxrPVPUnhHU9Y-WAMy8_tCS5cH7_pg7JSWIWIfY-WfWeX_Gg/exec", "_blank"),
       style: "bg-white text-slate-900",
     },
   ];
@@ -247,22 +259,6 @@ const Dashboard = () => {
 
           <div className="relative z-10 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">
-                <Sparkles className="h-4 w-4" />
-                Advanced dashboard
-              </div>
-
-              <div className="max-w-3xl space-y-3">
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-                  Vendor operations ka smarter, sharper aur zyada premium control room.
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
-                  Live Vendor sheet ko metrics, coverage, product mix, searchable insights
-                  aur quick action modules me convert kiya gaya hai, taaki dashboard
-                  sirf summary na lage, actual command center feel de.
-                </p>
-              </div>
-
               <div className="flex flex-wrap gap-3">
                 {quickActions.map((item) => (
                   <button
@@ -315,9 +311,24 @@ const Dashboard = () => {
                   <input
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Search party, state, contact, product..."
+                    placeholder="Search party, contact, state..."
                     className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
                   />
+                </div>
+                <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-slate-900">
+                  <Layers3 className="h-4 w-4 text-slate-400" />
+                  <select
+                    value={productFilter}
+                    onChange={(event) => setProductFilter(event.target.value)}
+                    className="w-full bg-transparent text-sm outline-none cursor-pointer"
+                  >
+                    <option value="">All Products</option>
+                    {productOptions.map((product) => (
+                      <option key={product} value={product}>
+                        {product}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-white/10 p-3">

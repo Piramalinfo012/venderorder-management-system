@@ -38,6 +38,8 @@ const VendorSearch = () => {
       try {
         setLoading(true);
         setError(null);
+        // Force refresh by ignoring cache for the primary search view if needed
+        // but fetchCached already handles the basic load. We make sure it's fresh.
         const { vendors: vendorRecords } = await fetchVendorsCached();
         setVendors(vendorRecords);
       } catch (fetchError) {
