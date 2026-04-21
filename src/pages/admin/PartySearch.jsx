@@ -384,7 +384,7 @@ const VendorSearch = () => {
                   initial={{ opacity: 0, height: 0, y: -20 }}
                   animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0, y: -20 }}
-                  className="rounded-[2rem] border border-white/60 bg-white/70 p-4 sm:p-5 shadow-xl shadow-slate-200/40 backdrop-blur-xl"
+                  className="rounded-[2rem] border-2 border-slate-200 bg-white p-4 sm:p-5 shadow-lg shadow-slate-200/50 backdrop-blur-xl"
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="relative">
@@ -396,7 +396,7 @@ const VendorSearch = () => {
                         value={partyFilter}
                         onChange={(e) => setPartyFilter(e.target.value)}
                         placeholder="Search party, focus, or region..."
-                        className="h-14 w-full rounded-2xl border-none bg-slate-100 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:ring-2 focus:ring-sky-500/50"
+                        className="h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10"
                       />
                     </div>
                     
@@ -405,7 +405,7 @@ const VendorSearch = () => {
                         <select
                           value={productFilter}
                           onChange={(e) => setProductFilter(e.target.value)}
-                          className="h-14 w-full appearance-none rounded-2xl border-none bg-slate-100 pl-5 pr-10 text-sm font-semibold text-slate-800 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-sky-500/50 cursor-pointer"
+                          className="h-14 w-full appearance-none rounded-2xl border border-slate-300 bg-slate-50 pl-5 pr-10 text-sm font-semibold text-slate-800 outline-none transition-all focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 cursor-pointer"
                         >
                           <option value="">All Commodities</option>
                           {productOptions.map((product) => (
@@ -449,7 +449,7 @@ const VendorSearch = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: position > 10 ? 0 : position * 0.05 }}
-                      className="group relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-5 sm:p-7 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] transition-all hover:border-sky-200 hover:shadow-2xl hover:shadow-sky-100 hover:-translate-y-1"
+                      className="group relative overflow-hidden rounded-[2rem] border-2 border-slate-200 bg-white p-5 sm:p-7 shadow-md transition-all hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-200 hover:-translate-y-1"
                     >
                       <div className="absolute top-0 right-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-slate-50 transition-colors group-hover:bg-sky-50/50" />
                       

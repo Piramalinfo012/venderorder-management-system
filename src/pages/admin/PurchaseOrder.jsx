@@ -272,7 +272,7 @@ const PurchaseOrder = () => {
               {filtered.map((po) => (
                 <div
                   key={po.id}
-                  className="group rounded-[1.5rem] border border-slate-100 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-lg hover:shadow-violet-100/60"
+                  className="group rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
                 >
                   {/* Card Header */}
                   <div className="flex items-start justify-between gap-3">
