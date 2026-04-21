@@ -1,8 +1,8 @@
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbzQGz5S4rrdZJNB2FN4YmgPb68Do-dUsZ3pogb3OxVyeOzHcIt-SSKc2iautiPyamL5/exec";
+  "https://script.google.com/macros/s/AKfycbyn7g_Mt7zSTjTmukJhpKWokUCZNFb0l6g-bwd5jgUZLpbTBq-f4LviMjBBQlM85XeX/exec";
 
 const CACHE_KEY = "vendor-rate-tracking:vendors";
-const CACHE_TTL_MS = 10 * 1000; // 10 seconds for 'instant' feel
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache for ultra-fast navigation between pages
 
 const columns = [
   "partyName",
@@ -13,6 +13,9 @@ const columns = [
   "whatsappNumber",
   "productsTheySell",
   "lastPurchaseDate",
+  "paymentTerm",
+  "creditLitmit",
+  "documentId"
 ];
 
 let memoryCache = null;
@@ -34,6 +37,7 @@ const normalizeVendors = (rows) =>
 
       return {
         id: `${index}-${mapped.partyName || mapped.contactPerson || "vendor"}`,
+        rowIndex: index + 2, // Row 1 is header, data starts at Row 2
         ...mapped,
       };
     })

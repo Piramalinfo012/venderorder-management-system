@@ -40,7 +40,7 @@ const Sidebar = () => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendor Search', path: '/party-search', icon: Search },
-    { name: 'Quotation', path: 'https://script.google.com/macros/s/AKfycbzjU0VOBHyvWioZlb--7d3idRJNDVzaPL6YDrcf5Rb7imQ6ISPVfcD-tcQXdh7gJcB-/exec', icon: FileText, external: true },
+    { name: 'Quotation', path: '/quotation', icon: FileText },
     { name: 'Purchase Order', path: '/purchase-order', icon: FileText }
   ];
 

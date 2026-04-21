@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Dashboard from './pages/admin/Dashboard';
 import PartySearch from './pages/admin/PartySearch';
 import PurchaseOrder from './pages/admin/PurchaseOrder';
+import Quotation from './pages/admin/Quotation';
 import Sidebar from './layouts/Sidebar';
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="party-search" element={<PartySearch />} />
-        <Route path="quotation" element={<Navigate to="/dashboard" replace />} />
+        <Route path="quotation" element={<Quotation />} />
         <Route path="sales-order" element={<Navigate to="/dashboard" replace />} />
         <Route path="purchase-order" element={<PurchaseOrder />} />
         <Route path="pending-order" element={<Navigate to="/dashboard" replace />} />
