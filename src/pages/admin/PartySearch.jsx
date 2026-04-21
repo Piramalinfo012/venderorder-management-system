@@ -449,7 +449,7 @@ const VendorSearch = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: position > 10 ? 0 : position * 0.05 }}
-                      className="group relative overflow-hidden rounded-[2rem] border-2 border-slate-200 bg-white p-5 sm:p-7 shadow-md transition-all hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-200 hover:-translate-y-1"
+                      className="group relative overflow-hidden rounded-[1.25rem] sm:rounded-[2rem] border-2 border-slate-200 bg-white p-4 sm:p-7 shadow-md transition-all hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-200 hover:-translate-y-1"
                     >
                       <div className="absolute top-0 right-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-slate-50 transition-colors group-hover:bg-sky-50/50" />
                       
@@ -463,9 +463,9 @@ const VendorSearch = () => {
                         </button>
                       </div>
 
-                      <div className="relative z-10 grid gap-6 sm:grid-cols-[1fr_auto]">
+                      <div className="relative z-10 grid gap-4 sm:gap-6 sm:grid-cols-[1fr_auto]">
                         {/* Primary Info */}
-                        <div className="space-y-5">
+                        <div className="space-y-3 sm:space-y-5">
                           <div className="flex flex-wrap items-start gap-4">
                             <div className="flex items-center justify-center h-12 w-12 rounded-[1.2rem] bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-lg">
                                 <Building2 className="h-6 w-6" />

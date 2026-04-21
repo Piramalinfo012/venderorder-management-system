@@ -272,7 +272,7 @@ const PurchaseOrder = () => {
               {filtered.map((po) => (
                 <div
                   key={po.id}
-                  className="group rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
+                  className="group rounded-[1.25rem] sm:rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4 sm:p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
                 >
                   {/* Card Header */}
                   <div className="flex items-start justify-between gap-3">
@@ -325,7 +325,7 @@ const PurchaseOrder = () => {
                   </div>
 
                   {/* Tags */}
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
                     {po.gstNo && (
                       <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                         GST: {po.gstNo}

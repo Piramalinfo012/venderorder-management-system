@@ -97,22 +97,7 @@ const Sidebar = () => {
             </button>
           </div>
 
-            <div className="sm:hidden py-3 border-t border-gray-200 space-y-2">
-              {navItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavClick(item)}
-                  className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-3 ${isActive(item.path)
-                      ? 'text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  style={isActive(item.path) ? { backgroundColor: '#1e40af' } : {}}
-                >
-                  <item.icon size={20} />
-                  {item.name}
-                </button>
-              ))}
-            </div>
+
         </div>
       </header>
 
@@ -129,10 +114,45 @@ const Sidebar = () => {
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 sm:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-slate-900/40 z-40 sm:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}
+
+      {/* Mobile Slide-in Drawer */}
+      <div 
+        className={`fixed inset-y-0 left-0 w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out sm:hidden flex flex-col ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <img src="/PPPL.png" alt="PPPL Logo" className="h-8 w-auto object-contain" />
+            <span className="font-bold text-gray-900 tracking-tight">Navigation</span>
+          </div>
+          <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 rounded-xl transition-colors">
+             <X size={20} />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-5 px-4 space-y-2">
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => handleNavClick(item)}
+              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-3 ${
+                isActive(item.path)
+                  ? 'text-white shadow-lg shadow-blue-900/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              style={isActive(item.path) ? { backgroundColor: '#1e40af' } : {}}
+            >
+              <item.icon size={22} className={isActive(item.path) ? "text-white" : "text-gray-400"} />
+              {item.name}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
