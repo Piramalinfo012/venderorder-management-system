@@ -287,25 +287,25 @@ const VendorSearch = () => {
   }
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="min-h-screen relative bg-[#f4f7f9] px-4 py-8 sm:px-6 lg:px-8 overflow-hidden">
+    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="min-h-screen relative bg-[#f4f7f9] px-2 py-4 sm:px-6 sm:py-8 sm:px-6 lg:px-8 overflow-hidden">
       <div className="mx-auto max-w-7xl space-y-8">
         
         {/* Dynamic Header Section */}
-        <motion.section variants={fadeInUp} className="relative overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#020617,#0f172a_30%,#0e7490_100%)] text-white shadow-2xl shadow-sky-900/10">
+        <motion.section variants={fadeInUp} className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] bg-[linear-gradient(135deg,#020617,#0f172a_30%,#0e7490_100%)] text-white shadow-2xl shadow-sky-900/10">
            {/* Animated Orbs Background */}
            <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 150, repeat: Infinity, ease: "linear" }} className="absolute -right-[10%] -top-[40%] h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.15)_0%,transparent_60%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
           </div>
 
-          <div className="relative z-10 grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.4fr_0.6fr]">
+          <div className="relative z-10 grid gap-4 sm:gap-8 p-4 sm:p-10 lg:grid-cols-[1.4fr_0.6fr]">
             {/* Title & Stats */}
             <div className="space-y-8">
               <div className="space-y-3">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-sky-200 backdrop-blur-sm">
                   <UserRound className="h-4 w-4" /> Global Directory
                 </motion.div>
-                <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-100 to-cyan-200">
+                <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-100 to-cyan-200">
                   Vendor Search
                 </h1>
                 <p className="max-w-xl text-sky-100/70 text-base sm:text-lg leading-relaxed font-light">
@@ -323,7 +323,7 @@ const VendorSearch = () => {
                 ].map((stat, i) => (
                   <motion.div key={stat.label} custom={i} variants={fadeInUp} className="group flex flex-col justify-center rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10 hover:-translate-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/80">{stat.label}</p>
-                    <p className="mt-1 text-2xl sm:text-3xl font-black tabular-nums">{stat.val}</p>
+                    <p className="mt-1 text-xl sm:text-3xl font-black tabular-nums">{stat.val}</p>
                   </motion.div>
                 ))}
               </div>
@@ -339,7 +339,7 @@ const VendorSearch = () => {
                 >
                   <div className="flex items-center gap-4">
                     <div className="rounded-xl bg-white/20 p-2.5 backdrop-blur-md">
-                      <Plus className="h-6 w-6 text-white" />
+                      <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                     <div className="text-left">
                       <p className="text-lg font-black tracking-wide text-white">Add Vendor</p>
@@ -372,7 +372,7 @@ const VendorSearch = () => {
            </button>
         </div>
 
-        <motion.div variants={staggerContainer} className="grid grid-cols-1 gap-8 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1fr_350px]">
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-[1.3fr_0.7fr] xl:grid-cols-[1fr_350px]">
           
           {/* Main Content List */}
           <motion.div variants={fadeInUp} className="flex flex-col gap-6">
@@ -384,7 +384,7 @@ const VendorSearch = () => {
                   initial={{ opacity: 0, height: 0, y: -20 }}
                   animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0, y: -20 }}
-                  className="rounded-[2rem] border-2 border-slate-200 bg-white p-4 sm:p-5 shadow-lg shadow-slate-200/50 backdrop-blur-xl"
+                  className="rounded-[2rem] border-2 border-slate-200 bg-white p-3 sm:p-5 shadow-lg shadow-slate-200/50 backdrop-blur-xl"
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="relative">
@@ -396,7 +396,7 @@ const VendorSearch = () => {
                         value={partyFilter}
                         onChange={(e) => setPartyFilter(e.target.value)}
                         placeholder="Search party, focus, or region..."
-                        className="h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10"
+                        className="h-12 sm:h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10"
                       />
                     </div>
                     
@@ -405,7 +405,7 @@ const VendorSearch = () => {
                         <select
                           value={productFilter}
                           onChange={(e) => setProductFilter(e.target.value)}
-                          className="h-14 w-full appearance-none rounded-2xl border border-slate-300 bg-slate-50 pl-5 pr-10 text-sm font-semibold text-slate-800 outline-none transition-all focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 cursor-pointer"
+                          className="h-12 sm:h-14 w-full appearance-none rounded-2xl border border-slate-300 bg-slate-50 pl-5 pr-10 text-sm font-semibold text-slate-800 outline-none transition-all focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 cursor-pointer"
                         >
                           <option value="">All Commodities</option>
                           {productOptions.map((product) => (
@@ -422,7 +422,7 @@ const VendorSearch = () => {
                       {(partyFilter || productFilter) && (
                         <button
                           onClick={clearFilters}
-                          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100"
+                          className="flex h-12 sm:h-14 w-12 sm:w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100"
                         >
                           <X className="h-5 w-5" />
                         </button>
@@ -437,8 +437,8 @@ const VendorSearch = () => {
             <div className="space-y-4">
               <AnimatePresence>
                 {filteredVendors.length === 0 ? (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 px-6 py-20 text-center">
-                    <Search className="h-12 w-12 text-slate-300 mb-4" />
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white/50 px-6 py-20 text-center">
+                    <Search className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mb-4" />
                     <p className="text-lg font-bold text-slate-900">Zero Matches Found</p>
                     <p className="text-sm font-medium text-slate-500 mt-2 max-w-sm">No vendors match your specific combination of filters. Try reducing the restrictions.</p>
                   </motion.div>
@@ -449,7 +449,7 @@ const VendorSearch = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: position > 10 ? 0 : position * 0.05 }}
-                      className="group relative overflow-hidden rounded-[1.25rem] sm:rounded-[2rem] border-2 border-slate-200 bg-white p-4 sm:p-7 shadow-md transition-all hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-200 hover:-translate-y-1"
+                      className="group relative overflow-hidden rounded-xl sm:rounded-[2rem] border-2 border-slate-200 bg-white p-2 sm:p-7 shadow-md transition-all hover:border-sky-300 hover:shadow-2xl hover:shadow-sky-200 hover:-translate-y-1"
                     >
                       <div className="absolute top-0 right-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-slate-50 transition-colors group-hover:bg-sky-50/50" />
                       
@@ -463,43 +463,43 @@ const VendorSearch = () => {
                         </button>
                       </div>
 
-                      <div className="relative z-10 grid gap-4 sm:gap-6 sm:grid-cols-[1fr_auto]">
+                      <div className="relative z-10 grid gap-3 sm:gap-6 sm:grid-cols-[1fr_auto]">
                         {/* Primary Info */}
-                        <div className="space-y-3 sm:space-y-5">
-                          <div className="flex flex-wrap items-start gap-4">
-                            <div className="flex items-center justify-center h-12 w-12 rounded-[1.2rem] bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-lg">
-                                <Building2 className="h-6 w-6" />
+                        <div className="space-y-2 sm:space-y-5">
+                          <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+                            <div className="flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 rounded-lg sm:rounded-[1.2rem] bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-lg">
+                                <Building2 className="h-4 w-4 sm:h-6 sm:w-6" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight">{vendor.partyName || "Unnamed Vendor"}</h3>
-                                <div className="mt-1.5 flex flex-wrap gap-2">
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                                    <MapPin className="h-3 w-3" /> {vendor.stateName || "Location TBA"}
+                                <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">{vendor.partyName || "Unnamed Vendor"}</h3>
+                                <div className="mt-1 sm:mt-1.5 flex flex-wrap gap-1.5 sm:gap-2">
+                                  <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-slate-100 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                    <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {vendor.stateName || "Location TBA"}
                                   </span>
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                                    <UserRound className="h-3 w-3" /> {vendor.contactPerson || "Contact TBA"}
+                                  <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-emerald-50 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                                    <UserRound className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {vendor.contactPerson || "Contact TBA"}
                                   </span>
                                 </div>
                             </div>
                           </div>
 
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
-                            <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                              <Phone className="h-5 w-5 text-sky-500 shrink-0" />
+                          <div className="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs sm:text-sm">
+                            <a href={vendor.whatsappNumber ? `tel:${vendor.whatsappNumber}` : undefined} className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-slate-50 px-2.5 py-2 sm:px-4 sm:py-3 transition-colors hover:bg-slate-100 cursor-pointer">
+                              <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-sky-500 shrink-0" />
                               <span className="font-semibold text-slate-700 truncate">{vendor.whatsappNumber || "No Phone"}</span>
-                            </div>
-                            <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                              <ShieldCheck className="h-5 w-5 text-amber-500 shrink-0" />
+                            </a>
+                            <div className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-slate-50 px-2.5 py-2 sm:px-4 sm:py-3">
+                              <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 shrink-0" />
                               <span className="font-semibold text-slate-700 truncate">{vendor.gstNumber || "No GST ID"}</span>
                             </div>
-                            <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 sm:col-span-2 lg:col-span-1">
-                              <BadgeIndianRupee className="h-5 w-5 text-emerald-500 shrink-0" />
+                            <div className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-slate-50 px-2.5 py-2 sm:px-4 sm:py-3 sm:col-span-2 lg:col-span-1">
+                              <BadgeIndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
                               <span className="font-semibold text-slate-700 truncate">{formatPurchaseDate(vendor.lastPurchaseDate)}</span>
                             </div>
                           </div>
 
                           {vendor.billingAddress && (
-                            <p className="text-[13px] leading-relaxed font-medium text-slate-500 pl-1 border-l-2 border-slate-200 ml-1">
+                            <p className="text-xs sm:text-[13px] leading-relaxed font-medium text-slate-500 pl-1 border-l-2 border-slate-200 ml-1">
                               {vendor.billingAddress}
                             </p>
                           )}
@@ -507,16 +507,16 @@ const VendorSearch = () => {
 
                         {/* Product Tags */}
                         <div className="sm:border-l sm:border-slate-100 sm:pl-6 min-w-[200px]">
-                           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-3">Commodities Segment</p>
-                           <div className="flex flex-wrap gap-2">
+                           <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 sm:mb-3">Commodities Segment</p>
+                           <div className="flex flex-wrap gap-1.5 sm:gap-2">
                               {getProductTags(vendor.productsTheySell).length > 0 ? (
                                 getProductTags(vendor.productsTheySell).map((product) => (
-                                  <span key={`${vendor.id}-${product}`} className="rounded-[0.8rem] border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800 shadow-sm">
+                                  <span key={`${vendor.id}-${product}`} className="rounded-md sm:rounded-[0.8rem] border border-sky-100 bg-sky-50 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-sky-800 shadow-sm">
                                     {product}
                                   </span>
                                 ))
                               ) : (
-                                <span className="rounded-[0.8rem] bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">Unspecified</span>
+                                <span className="rounded-md sm:rounded-[0.8rem] bg-slate-100 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-slate-500">Unspecified</span>
                               )}
                            </div>
                         </div>
@@ -529,7 +529,7 @@ const VendorSearch = () => {
           </motion.div>
 
           {/* Compact View Side Panel */}
-          <motion.div variants={fadeInUp} className="hidden sm:flex flex-col gap-5 h-max rounded-[2.5rem] border border-white/60 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/40 sticky top-24">
+          <motion.div variants={fadeInUp} className="hidden sm:flex flex-col gap-5 h-max rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/60 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/40 sticky top-24">
             <div className="flex items-center justify-between border-b border-slate-100 pb-5">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-violet-500">Compact List</p>

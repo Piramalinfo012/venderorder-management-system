@@ -151,8 +151,8 @@ const PurchaseOrder = () => {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
-        <div className="w-full max-w-xl rounded-[2rem] border border-red-100 bg-white p-10 text-center shadow-sm">
-          <h2 className="text-2xl font-bold text-slate-900">Failed to load</h2>
+        <div className="w-full max-w-xl rounded-[1.25rem] sm:rounded-[2rem] border border-red-100 bg-white p-10 text-center shadow-sm">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Failed to load</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -166,7 +166,7 @@ const PurchaseOrder = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#ddd6fe,_#f5f3ff_25%,_#f8fafc_55%,_#ede9fe_100%)] px-4 py-5 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#ddd6fe,_#f5f3ff_25%,_#f8fafc_55%,_#ede9fe_100%)] px-2 py-4 sm:px-6 sm:py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         {debugInfo && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 font-mono text-[10px] text-violet-900 backdrop-blur-sm overflow-auto max-h-40">
@@ -175,8 +175,8 @@ const PurchaseOrder = () => {
         )}
 
         {/* Hero Header */}
-        <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#020617,#4c1d95_40%,#6d28d9_100%)] text-white shadow-[0_30px_80px_-35px_rgba(109,40,217,0.7)]">
-          <div className="grid gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[1.4fr_0.6fr]">
+        <section className="overflow-hidden rounded-[1.25rem] sm:rounded-[2rem] bg-[linear-gradient(135deg,#020617,#4c1d95_40%,#6d28d9_100%)] text-white shadow-[0_30px_80px_-35px_rgba(109,40,217,0.7)]">
+          <div className="grid gap-4 sm:gap-6 px-2 py-4 sm:px-6 sm:py-5 sm:px-8 lg:grid-cols-[1.4fr_0.6fr]">
 
             {/* Left: Title + Stats */}
             <div className="space-y-5">
@@ -184,7 +184,7 @@ const PurchaseOrder = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-300">
                   Purchase Orders
                 </p>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight sm:text-4xl">
                   PO Command Center
                 </h1>
                 <p className="text-sm leading-7 text-violet-100">
@@ -195,15 +195,15 @@ const PurchaseOrder = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-violet-200">Total POs</p>
-                  <p className="mt-2 text-2xl font-bold">{orders.length}</p>
+                  <p className="mt-2 text-xl sm:text-2xl font-bold">{orders.length}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-violet-200">Filtered</p>
-                  <p className="mt-2 text-2xl font-bold">{filtered.length}</p>
+                  <p className="mt-2 text-xl sm:text-2xl font-bold">{filtered.length}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-violet-200">With PDF</p>
-                  <p className="mt-2 text-2xl font-bold">
+                  <p className="mt-2 text-xl sm:text-2xl font-bold">
                     {orders.filter((o) => o.pdfUrl).length}
                   </p>
                 </div>
@@ -221,7 +221,7 @@ const PurchaseOrder = () => {
                 className="group flex items-center gap-3 rounded-2xl bg-white px-5 py-4 text-left text-violet-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
               >
                 <div className="rounded-xl bg-violet-600 p-2 text-white">
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
                   <p className="font-bold text-sm">New Purchase Order</p>
@@ -244,13 +244,13 @@ const PurchaseOrder = () => {
         </section>
 
         {/* Orders Grid */}
-        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.5)] backdrop-blur sm:p-6">
+        <section className="rounded-[1.25rem] sm:rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.5)] backdrop-blur sm:p-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-5">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-600">
                 Records
               </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+              <h2 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 Purchase Order List
               </h2>
             </div>
@@ -272,7 +272,7 @@ const PurchaseOrder = () => {
               {filtered.map((po) => (
                 <div
                   key={po.id}
-                  className="group rounded-[1.25rem] sm:rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4 sm:p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
+                  className="group rounded-[1.25rem] sm:rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-3 sm:p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
                 >
                   {/* Card Header */}
                   <div className="flex items-start justify-between gap-3">
