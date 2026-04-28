@@ -41,7 +41,8 @@ const Sidebar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendor Search', path: '/party-search', icon: Search },
     { name: 'Quotation', path: '/quotation', icon: FileText },
-    { name: 'Purchase Order', path: '/purchase-order', icon: FileText }
+    { name: 'Purchase Order', path: '/purchase-order', icon: FileText },
+    { name: 'SO', path: '/sales-order', icon: FileText }
   ];
 
   // Check if current path is active

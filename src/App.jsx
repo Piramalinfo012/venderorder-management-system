@@ -3,6 +3,7 @@ import Dashboard from './pages/admin/Dashboard';
 import PartySearch from './pages/admin/PartySearch';
 import PurchaseOrder from './pages/admin/PurchaseOrder';
 import Quotation from './pages/admin/Quotation';
+import SalesOrder from './pages/admin/SalesOrder';
 import Sidebar from './layouts/Sidebar';
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="party-search" element={<PartySearch />} />
         <Route path="quotation" element={<Quotation />} />
-        <Route path="sales-order" element={<Navigate to="/dashboard" replace />} />
+        <Route path="sales-order" element={<SalesOrder />} />
         <Route path="purchase-order" element={<PurchaseOrder />} />
         <Route path="pending-order" element={<Navigate to="/dashboard" replace />} />
         <Route path="calendar" element={<Navigate to="/dashboard" replace />} />
