@@ -98,8 +98,8 @@ const normalizePOs = (rows, headerRow = []) => {
       // Find PDF Edit URL (starts with docs.google.com)
       const pdfEditUrl = row.find((val) => typeof val === "string" && val.includes("docs.google.com/document")) || "";
 
-      // Find PDF URL (starts with drive.google.com)
-      const pdfUrl = row.find((val) => typeof val === "string" && val.includes("drive.google.com/file")) || "";
+      // PDF URL is in column AA (0-indexed 26)
+      const pdfUrl = row[26] ?? "";
 
       const mapped = PO_COLUMNS.reduce((acc, key, colIdx) => {
         const actualIdx = headerMap[key] !== undefined ? headerMap[key] : colIdx;
