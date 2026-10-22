@@ -19,7 +19,7 @@ const SCRIPT_URL =
 const PO_FORM_URL =
   "https://script.google.com/macros/s/AKfycbxuERnJ4UbK9abqRiuccfaxrPVPUnhHU9Y-WAMy8_tCS5cH7_pg7JSWIWIfY-WfWeX_Gg/exec";
 
-// Sheet columns (0-indexed): Date | Proforma No | Party Name | Purchase Being Done For | Contact Person | Contact Number | GST Number | Billing Address | Shipping Address | Product | Quantity | Rate | Density Content | Sulphur Content | GCV | Moisture | Flash Point | Viscosity | Payment Terms & Conditions | PO Number | Transportation Type | Transportation Date & Time | Unloading Basis | Test Report Attachment | Any Other Information | Doc URL | PDF URL
+// Sheet columns (0-indexed): Date | Proforma No | Party Name | Purchase Being Done For | Contact Person | Contact Number | GST Number | Pan | Billing Address | Shipping Address | Product | Quantity | Rate | Density Content | Sulphur Content | GCV | Moisture | Flash Point | Viscosity | Payment Terms & Conditions | PO Number | Transportation Type | Transportation Date & Time | Unloading Basis | Test Report Attachment | Any Other Information | Doc URL | PDF URL
 const PO_COLUMNS = [
   "date",
   "orderNo",
@@ -28,6 +28,7 @@ const PO_COLUMNS = [
   "contactPerson",
   "contactNo",
   "gstNo",
+  "pan",
   "address",
   "shippingAddress",
   "productName",
@@ -58,6 +59,7 @@ const HEADER_NAME_MAP = {
   "contact person": "contactPerson",
   "contact number": "contactNo",
   "gst number": "gstNo",
+  "pan": "pan",
   "billing address": "address",
   "shipping address": "shippingAddress",
   "product": "productName",
@@ -134,7 +136,7 @@ const PurchaseOrder = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const cacheKey = "vendor-admin:po-data-purchase-order";
+      const cacheKey = "vendor-admin:po-data-purchase-order-v3";
       const cacheTTL = 5 * 60 * 1000; // 5 minutes cache
 
       try {
@@ -512,6 +514,14 @@ const PurchaseOrder = () => {
                           {selectedOrder.gstNo || "—"}
                         </span>
                       </div>
+                      {selectedOrder.pan && (
+                        <div>
+                          <span className="text-slate-400 block">PAN</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrder.pan}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <span className="text-slate-400 block">Contact Person</span>
                         <span className="font-medium text-slate-700">
