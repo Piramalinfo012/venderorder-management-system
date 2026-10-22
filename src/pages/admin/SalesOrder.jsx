@@ -2,13 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ExternalLink,
+  Eye,
   FileText,
   Hash,
   Loader2,
+  MapPin,
   Package,
+  Phone,
   Plus,
   Search,
+  Truck,
   User,
+  X,
 } from "lucide-react";
 
 const SCRIPT_URL =
@@ -19,32 +24,69 @@ const SO_FORM_URL =
 
 const SHEET_ID = "1en1XvWXKU86YlIgFmPl_b5vChuW9xeVWbYyyG_kpd9Y";
 
-// Sheet columns (0-indexed): DATE ORDER_NO PARTY_NAME ADDRESS KINDLY_ATTN CONTACT_NO GST_NO PAN_NO HSN_CODE QUANTITY PRODUCT_NAME UNIT PRICE TRANSPORTATION LIFTING NOTE PAYMENT_TERMS SHIPPING_ADDRESS PDF_EDIT_URL PDF_URL
+// SO sheet headers (0-indexed): Date | Proforma No | Party Name | Contact Person | Contact Number | GST Number | Billing Address | Shipping Address | Product | Quantity | Rate | Payment Terms & Conditions | PO Number | Delivery Type | Delivery Date & Time | Unloading Basis | Pipe/Motor/Pump Requirement | First Order / Trial Order | Extra Precautions Instructed | Any Other Information | Doc URL | PDF URL
 const SO_COLUMNS = [
   "date",
   "orderNo",
   "partyName",
-  "address",
-  "kindlyAttn",
+  "contactPerson",
   "contactNo",
   "gstNo",
-  "panNo",
-  "hsnCode",
-  "quantity",
-  "productName",
-  "unit",
-  "price",
-  "transportation",
-  "lifting",
-  "note",
-  "paymentTerms",
+  "address",
   "shippingAddress",
+  "productName",
+  "quantity",
+  "price",
+  "paymentTerms",
+  "poNo",
+  "delivery",
+  "deliveryDate",
+  "unloading",
+  "pipeMotor",
+  "trialOrder",
+  "precautions",
+  "otherInfo",
   "pdfEditUrl",
   "pdfUrl",
 ];
 
-const normalizeSOs = (rows) =>
-  rows
+const HEADER_NAME_MAP = {
+  "date": "date",
+  "proforma no": "orderNo",
+  "party name": "partyName",
+  "contact person": "contactPerson",
+  "contact number": "contactNo",
+  "gst number": "gstNo",
+  "billing address": "address",
+  "shipping address": "shippingAddress",
+  "product": "productName",
+  "quantity": "quantity",
+  "rate": "price",
+  "payment terms & conditions": "paymentTerms",
+  "po number": "poNo",
+  "delivery type": "delivery",
+  "delivery date & time": "deliveryDate",
+  "unloading basis": "unloading",
+  "pipe/motor/pump requirement": "pipeMotor",
+  "first order / trial order": "trialOrder",
+  "extra precautions instructed": "precautions",
+  "any other information": "otherInfo",
+  "doc url": "pdfEditUrl",
+  "pdf url": "pdfUrl",
+};
+
+const normalizeSOs = (rows, headerRow = []) => {
+  const headerMap = {};
+  if (Array.isArray(headerRow)) {
+    headerRow.forEach((col, idx) => {
+      const normalized = String(col || "").trim().toLowerCase();
+      if (HEADER_NAME_MAP[normalized]) {
+        headerMap[HEADER_NAME_MAP[normalized]] = idx;
+      }
+    });
+  }
+
+  return rows
     .map((row, index) => {
       // Find PDF Edit URL (starts with docs.google.com)
       const pdfEditUrl = row.find(val => typeof val === 'string' && val.includes('docs.google.com/document')) || "";
@@ -53,7 +95,8 @@ const normalizeSOs = (rows) =>
       const pdfUrl = row.find(val => typeof val === 'string' && val.includes('drive.google.com/file')) || "";
 
       const mapped = SO_COLUMNS.reduce((acc, key, colIdx) => {
-        acc[key] = row[colIdx] ?? "";
+        const actualIdx = headerMap[key] !== undefined ? headerMap[key] : colIdx;
+        acc[key] = row[actualIdx] ?? "";
         return acc;
       }, {});
       
@@ -64,6 +107,7 @@ const normalizeSOs = (rows) =>
       return { id: `so-${index}`, ...mapped };
     })
     .filter((so) => so.orderNo || so.partyName || so.date);
+};
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -82,10 +126,11 @@ const SalesOrder = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const cacheKey = "vendor-admin:so-data";
+      const cacheKey = "vendor-admin:so-data-so";
       const cacheTTL = 5 * 60 * 1000; // 5 minutes cache
 
       try {
@@ -122,7 +167,7 @@ const SalesOrder = () => {
           setDebugInfo(`Raw Row 1 (${data[1].length} cols): ${JSON.stringify(data[1])}`);
         }
         
-        const rows = normalizeSOs(data.slice(1)).reverse();
+        const rows = normalizeSOs(data.slice(1), data[0]).reverse();
         
         // Save to cache
         sessionStorage.setItem(cacheKey, JSON.stringify({
@@ -285,87 +330,323 @@ const SalesOrder = () => {
               </p>
             </div>
           ) : (
-            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((so) => (
                 <div
                   key={so.id}
-                  className="group rounded-[1.25rem] sm:rounded-[1.5rem] border-2 border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-3 sm:p-5 shadow-md transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-200/60"
+                  className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md hover:shadow-violet-100"
                 >
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-xl bg-violet-950 p-2 text-white">
-                        <FileText className="h-4 w-4" />
+                  <div>
+                    {/* Compact Card Header */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="rounded-xl bg-violet-950 p-2 text-white shrink-0">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-sm truncate" title={so.orderNo}>
+                            {so.orderNo || "—"}
+                          </p>
+                          <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <CalendarDays className="h-3 w-3 shrink-0" />
+                            {formatDate(so.date)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900 text-sm">
-                          {so.orderNo || "—"}
-                        </p>
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                          <CalendarDays className="h-3 w-3" />
-                          {formatDate(so.date)}
-                        </p>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOrder(so)}
+                          className="rounded-xl bg-violet-50 p-1.5 text-violet-600 transition hover:bg-violet-100 hover:text-violet-800"
+                          title="View Full Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {so.pdfUrl && (
+                          <a
+                            href={so.pdfUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-xl bg-slate-100 p-1.5 text-slate-600 transition hover:bg-violet-50 hover:text-violet-600"
+                            title="View PDF"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
                       </div>
                     </div>
-                    {so.pdfUrl && (
-                      <a
-                        href={so.pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-xl bg-violet-50 p-2 text-violet-600 transition hover:bg-violet-100"
-                        title="View PDF"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
+
+                    {/* Compact Summary Info */}
+                    <div className="mt-3 space-y-1.5 text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-700">
+                        <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="font-semibold truncate" title={so.partyName}>
+                          {so.partyName || "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <Package className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate" title={so.productName}>
+                          {so.productName || "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <Hash className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">
+                          {so.quantity || "—"}
+                          {so.price ? ` · ₹${so.price}` : ""}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Info Rows */}
-                  <div className="mt-4 space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="font-semibold text-slate-800 truncate">
-                        {so.partyName || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Package className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate">{so.productName || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Hash className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>
-                        {so.quantity || "—"} {so.unit || ""}
-                        {so.price ? ` · ₹${so.price}` : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
-                    {so.gstNo && (
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                        GST: {so.gstNo}
-                      </span>
-                    )}
-                    {so.paymentTerms && (
-                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                        {so.paymentTerms}
-                      </span>
-                    )}
-                    {so.pdfEditUrl && (
-                      <a
-                        href={so.pdfEditUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition"
-                      >
-                        Edit PDF
-                      </a>
-                    )}
+                  {/* Card Footer */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span className="truncate text-slate-500 max-w-[60%]">
+                      {so.paymentTerms || so.delivery || "SO"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOrder(so)}
+                      className="inline-flex items-center gap-1 font-semibold text-violet-600 hover:text-violet-800 transition"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Details</span>
+                    </button>
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Full Details Modal */}
+          {selectedOrder && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+              onClick={() => setSelectedOrder(null)}
+            >
+              <div
+                className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="rounded-xl bg-violet-600 p-2 text-white shrink-0">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base font-bold text-slate-900 truncate">
+                          {selectedOrder.orderNo || "Sales Order"}
+                        </h3>
+                        <span className="rounded-md bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                          {formatDate(selectedOrder.date)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">
+                        {selectedOrder.partyName || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {selectedOrder.pdfUrl && (
+                      <a
+                        href={selectedOrder.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>PDF</span>
+                      </a>
+                    )}
+                    {selectedOrder.pdfEditUrl && (
+                      <a
+                        href={selectedOrder.pdfEditUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition"
+                      >
+                        <span>Doc</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOrder(null)}
+                      className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                      title="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
+                <div className="overflow-y-auto p-5 sm:p-6 space-y-4 text-xs">
+                  {/* Party & Contact */}
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
+                      Party & Contact Information
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-slate-400 block">Party Name</span>
+                        <span className="font-semibold text-slate-800 text-sm">
+                          {selectedOrder.partyName || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">GST Number</span>
+                        <span className="font-semibold text-slate-800">
+                          {selectedOrder.gstNo || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Contact Person</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.contactPerson || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Contact Number</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.contactNo || "—"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {(selectedOrder.address || selectedOrder.shippingAddress) && (
+                      <div className="pt-2 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedOrder.address && (
+                          <div>
+                            <span className="text-slate-400 block">Billing Address</span>
+                            <span className="text-slate-700">{selectedOrder.address}</span>
+                          </div>
+                        )}
+                        {selectedOrder.shippingAddress && (
+                          <div>
+                            <span className="text-slate-400 block">Shipping Address</span>
+                            <span className="text-slate-700">{selectedOrder.shippingAddress}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product & Commercials */}
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
+                      Product & Commercials
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div>
+                        <span className="text-slate-400 block">Product</span>
+                        <span className="font-semibold text-slate-800">
+                          {selectedOrder.productName || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Quantity</span>
+                        <span className="font-semibold text-slate-800">
+                          {selectedOrder.quantity || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Rate / Price</span>
+                        <span className="font-bold text-emerald-700">
+                          {selectedOrder.price ? `₹${selectedOrder.price}` : "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Payment Terms</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.paymentTerms || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">PO Number</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.poNo || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery & Logistics */}
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
+                      Delivery & Logistics
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div>
+                        <span className="text-slate-400 block">Delivery Type</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.delivery || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Delivery Date & Time</span>
+                        <span className="font-medium text-slate-700">
+                          {formatDate(selectedOrder.deliveryDate)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Unloading Basis</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.unloading || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Pipe/Motor/Pump</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.pipeMotor || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">First / Trial Order</span>
+                        <span className="font-medium text-slate-700">
+                          {selectedOrder.trialOrder || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes & Extra Info */}
+                  {(selectedOrder.precautions || selectedOrder.otherInfo) && (
+                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
+                        Additional Information
+                      </p>
+                      {selectedOrder.precautions && (
+                        <div>
+                          <span className="text-slate-400 block">Extra Precautions:</span>
+                          <p className="text-slate-700 mt-0.5">{selectedOrder.precautions}</p>
+                        </div>
+                      )}
+                      {selectedOrder.otherInfo && (
+                        <div>
+                          <span className="text-slate-400 block">Any Other Information:</span>
+                          <p className="text-slate-700 mt-0.5">{selectedOrder.otherInfo}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="border-t border-slate-100 bg-slate-50/50 px-6 py-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrder(null)}
+                    className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </section>
